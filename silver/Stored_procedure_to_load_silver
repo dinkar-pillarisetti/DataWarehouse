@@ -1,0 +1,74 @@
+/*
+1. time taken for each table to truncate and loading the data.
+2. total time taken by scipt to truncate and loading all the tables in stored procedure.
+3. printing the information on the screen
+4. truncating and loading the table by table.
+
+*/
+
+CREATE OR ALTER PROCEDURE  silver.load_silver 
+AS
+BEGIN
+BEGIN TRY
+DECLARE @start_time DATETIME,@end_time DATETIME,@batch_start_time DATETIME,@batch_end_time DATETIME
+SET @batch_start_time = GETDATE()
+SET @start_time = GETDATE()
+PRINT '>>>>>> LOADING SILVER LAYER  >>>>>>>>>>>>>>>>>>'
+PRINT '-----------------------------------------------'
+PRINT '-------------------CRM TABLE-------------------'
+PRINT '-----------------------------------------------'
+PRINT '--------------------DELETING CRM CUST TABLE----'
+TRUNCATE TABLE bronze.crm_cust_info;
+PRINT '--------------------LOADING CRM CUST TABLE-----'
+BULK INSERT bronze.crm_cust_info FROM
+"C:\Users\DinkarPavanPillarise\OneDrive - kyndryl\Desktop\sql\sql-data-warehouse-project\datasets\source_crm\cust_info.csv"
+WITH
+(
+FIRSTROW=2,
+FIELDTERMINATOR = ',',
+ROWTERMINATOR = '\n',
+TABLOCK
+);
+SET @end_time = GETDATE()
+PRINT '----------Processing Time CRM cust Table   :'+ CAST(DATEDIFF(second,@start_time,@end_time) AS NVARCHAR) + '  Seconds'
+PRINT '--------------------DELETING crm prod TABLE----'
+TRUNCATE TABLE bronze.crm_prd_info;
+PRINT '--------------------LOADING crm prod TABLE-----'
+SET @start_time = GETDATE();
+
+BULK INSERT bronze.crm_prd_info FROM
+"C:\Users\DinkarPavanPillarise\OneDrive - kyndryl\Desktop\sql\sql-data-warehouse-project\datasets\source_crm\prd_info.csv"
+WITH
+(
+FIRSTROW=2,
+FIELDTERMINATOR = ',',
+ROWTERMINATOR = '\n',
+TABLOCK
+);
+SET @end_time = GETDATE()
+PRINT '----------Processing Time CRM cust Table   :'+ CAST(DATEDIFF(second,@start_time,@end_time) AS NVARCHAR) + '  Seconds'
+
+
+
+
+
+PRINT '------------------------------------------------------------------------------'
+PRINT '------------------------------------------------------------------------------'
+SET @batch_end_time = GETDATE()
+PRINT '----------Total Processing Time   :'+ CAST(DATEDIFF(second,@batch_start_time,@batch_end_time) AS NVARCHAR) + '  Seconds'
+END TRY
+BEGIN CATCH
+PRINT '------------------------------------------------------------------------------'
+PRINT 'ERROR WHILE LOADING DATA INTO BRONZE LAYER'
+PRINT 'ERROR MESSAGE '+ERROR_MESSAGE()
+PRINT 'ERROR MESSAGE '+CAST(ERROR_NUMBER() AS NVARCHAR)
+PRINT 'ERROR MESSAGE '+CAST(ERROR_STATE() AS NVARCHAR)
+PRINT '------------------------------------------------------------------------------'
+
+
+
+END CATCH
+END
+--
+
+--EXEC silver.load_silver 
